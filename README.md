@@ -19,5 +19,5 @@ steps to start api:
   
   3. step3: open first terminal and type nodemon index.js "or" npm start -"type this to start local server"
   
-  4. step4: open second terminal and type npm electron main.js -"run app"  
+  4. step4: open second terminal and type npx electron main.js -"run app"  
 
