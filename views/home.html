@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+</head>
+<!-- <header class="bg-white shadow-lg py-4 px-6 border-solid">
+    <h1 class="text-2xl font-bold">My Web Layout</h1>
+</header> -->
+
+<header class="bg-white shadow-lg py-4 px-6 border-solid">
+    <nav class="flex items-center justify-between ">
+        <i class="fa fa-camera-retro" aria-hidden="true" style="font-size: 25px;"></i>
+        <a href="#" class="text-xl font-bold">Welcome</a>
+        <button id="toggleOffcanvas" class="p-2 text-gray-700 border rounded-md hover:bg-gray-200">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 5.25h16.5m-16.5 6h16.5m-16.5 6h16.5" />
+            </svg>
+        </button>
+    </nav>
+
+    <!-- Offcanvas Overlay -->
+    <div id="offcanvasOverlay" class="fixed inset-0 bg-black bg-opacity-50 hidden"></div>
+
+    <!-- Offcanvas Menu -->
+    <div id="offcanvasMenu" class="fixed top-0 right-0 h-full w-64 bg-white shadow-lg transform translate-x-full transition-transform duration-300">
+        <div class="p-4 flex justify-between items-center border-b">
+            <h2 class="text-lg font-semibold">Menu</h2>
+            <button id="closeOffcanvas" class="p-2 rounded-md hover:bg-gray-200">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <ul class="p-4 space-y-4">
+            <li><a href="#" class="block text-gray-700 hover:text-blue-500">Home</a></li>
+            <li><a href="#" class="block text-gray-700 hover:text-blue-500">About</a></li>
+            <li><a href="#" class="block text-gray-700 hover:text-blue-500">Services</a></li>
+            <li><a href="#" class="block text-gray-700 hover:text-blue-500">Contact</a></li>
+        </ul>
+    </div>
+
+    <script>
+        const toggleOffcanvas = document.getElementById('toggleOffcanvas');
+        const closeOffcanvas = document.getElementById('closeOffcanvas');
+        const offcanvasMenu = document.getElementById('offcanvasMenu');
+        const offcanvasOverlay = document.getElementById('offcanvasOverlay');
+
+        toggleOffcanvas.addEventListener('click', () => {
+            offcanvasMenu.classList.toggle('translate-x-full');
+            offcanvasOverlay.classList.toggle('hidden');
+        });
+
+        closeOffcanvas.addEventListener('click', () => {
+            offcanvasMenu.classList.add('translate-x-full');
+            offcanvasOverlay.classList.add('hidden');
+        });
+
+        offcanvasOverlay.addEventListener('click', () => {
+            offcanvasMenu.classList.add('translate-x-full');
+            offcanvasOverlay.classList.add('hidden');
+        });
+    </script>
+</header>
+
+<body class="h-screen bg-white">
+
+    <div class="flex h-full">
+        <!-- Left Side -->
+        <div class="w-1/2  flex items-center place-content-end mr-20">
+            <div class="flex flex-col items-center space-y-4">
+
+                <video id="userVideo" autoplay playsinline class="rounded-lg w-auto h-80"></video>
+
+                <div class="flex space-x-4">
+                    <div id="toggleMic"
+                        class="bg-sky-600 w-24 h-10 text-white rounded-md flex items-center justify-center space-x-2 hover:bg-sky-700 cursor-pointer caret-transparent">
+                        <i class="fa fa-microphone" aria-hidden="true"></i>
+                        <span>Mute</span>
+                    </div>
+                    <div id="toggleVideo"
+                        class="bg-sky-600 w-24 h-10 text-white rounded-md flex items-center justify-center space-x-2 hover:bg-sky-700 cursor-pointer caret-transparent">
+                        <i class="fa fa-camera" aria-hidden="true"></i>
+                        <span>Off</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Right Side -->
+        <div class="w-1/2 flex items-center">
+            <div class="flex flex-col items-center space-y-4">
+                <div class="flex">
+                    <input type="text" placeholder="  Enter room id"
+                        class=" w-64 px-3 py-2 bg-white border shadow-sm border-slate-300 placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-sky-500 block rounded-md sm:text-sm focus:ring-1">
+                    <div 
+                        class="ml-2 bg-sky-600 w-24 h-9 text-white rounded-md flex items-center justify-center hover:bg-sky-700 cursor-pointer caret-transparent space-x-2">
+                        <i class="fa fa-sign-in" aria-hidden="true"></i>
+                        <span>Join</span>
+                    </div>
+                </div>
+                <div onclick="createRoom()"
+                    class="ml-2 bg-sky-600 px-4 h-9 text-white rounded-md flex items-center justify-center hover:bg-sky-700 cursor-pointer caret-transparent space-x-2">
+                    <i class="fa fa-video-camera" aria-hidden="true"></i>
+                    <span>New meeting</span>
+                    
+                </div>
+                <!-- <input type="text" id="name" placeholder="Name"> -->
+            </div>
+        </div>
+    </div>
+    <script src="../public/home.js"></script>
+</body>
+
+</html>
