@@ -32,21 +32,21 @@
 	<div class="limiter">
 		<div class="container-login100">
 			<div class="wrap-login100">
-				<form class="login100-form validate-form" action="/login" method="post">
+				<form class="login100-form validate-form" id="loginForm">
 					<span class="login100-form-title p-b-43">
 						Login to continue
 					</span>
 					
 					
 					<div class="wrap-input100 validate-input" data-validate = "Valid email is required: ex@abc.xyz">
-						<input class="input100" type="text" name="email">
+						<input class="input100" type="text" name="email" id="email">
 						<span class="focus-input100"></span>
 						<span class="label-input100">Email</span>
 					</div>
 					
 					
 					<div class="wrap-input100 validate-input" data-validate="Password is required">
-						<input class="input100" type="password" name="pass">
+						<input class="input100" type="password" name="pass" id="pass">
 						<span class="focus-input100"></span>
 						<span class="label-input100">Password</span>
 					</div>
@@ -68,7 +68,7 @@
 			
 
 					<div class="container-login100-form-btn">
-						<button class="login100-form-btn">
+						<button class="login100-form-btn" type="submit">
 							Login
 						</button>
 					</div>
@@ -88,6 +88,11 @@
 							<i class="fa fa-twitter" aria-hidden="true"></i>
 						</a>
 					</div>
+					<div class="text-center p-t-46 p-b-20">
+						<span class="txt2">
+							Don't have an account? <a href="./register.html" class="txt2-link"><u>Sign up here</u></a>
+						</span>
+					</div>
 				</form>
 
 				<div class="login100-more" style="background-image: url('../authentication/login/images/bg-01.jpg');">
@@ -101,7 +106,8 @@
 	
 	
 <!--===============================================================================================-->
-	<script src="../authentication/login/vendor/jquery/jquery-3.2.1.min.js"></script>
+	<script src="../authentication/login/vendor/jquery/jquery-3.6.0.min.js"></script>
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <!--===============================================================================================-->
 	<script src="../authentication/login/vendor/animsition/js/animsition.min.js"></script>
 <!--===============================================================================================-->

@@ -6,7 +6,7 @@ let Name;
 let roomId;
 let stream;
 // Sử dụng cú pháp mới của jQuery cho việc xử lý sự kiện click
-// const { ipcRenderer } = require('electron'); // Đảm bảo đã cài Electron
+const { ipcRenderer } = require('electron'); // Đảm bảo đã cài Electron
 
 
 
@@ -46,6 +46,7 @@ async function getUserMedia() {
 
         // Gán stream vào thẻ video để hiển thị hình ảnh từ webcam
         videoElement.srcObject = stream;
+        videoElement.muted = true;
 
         console.log('User media acquired successfully!');
     } catch (error) {

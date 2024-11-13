@@ -68,3 +68,24 @@
     
 
 })(jQuery);
+
+const { ipcRenderer } = require('electron');
+
+  document.getElementById('loginForm').addEventListener('submit', (event) => {
+    event.preventDefault();
+
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('pass').value;
+
+    const userData = { email, password};
+
+    ipcRenderer.send('login-form-submit', userData);
+  });
+
+  ipcRenderer.on('login-response', (event, response) => {
+    if (response.success) {
+      alert(response.message); // Đăng nhập thành công
+    } else {
+      alert(response.message); // Đăng nhập thất bại
+    }
+  });
