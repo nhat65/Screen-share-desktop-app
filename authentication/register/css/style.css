@@ -356,3 +356,9 @@ input[type=checkbox]:not(old):checked + label > span:before {
     padding: 50px 25px; } }
 
 /*# sourceMappingURL=style.css.map */
+.error-message {
+  color: red;
+  font-size: 13px;
+  display: none; /* Mặc định ẩn thông báo lỗi */
+  margin-top: 5px;
+}

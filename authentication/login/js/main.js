@@ -86,6 +86,6 @@ const { ipcRenderer } = require('electron');
     if (response.success) {
       alert(response.message); // Đăng nhập thành công
     } else {
-      alert(response.message); // Đăng nhập thất bại
+        document.getElementById('login-error').innerText = `${response.message}`;
     }
   });
