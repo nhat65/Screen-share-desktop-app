@@ -22,6 +22,18 @@ function createRoom() {
     }
 }
 
+function joinRoom() {
+    Name = "Nhat";
+    roomId = document.getElementById('input-roomId').value;
+    console.log(roomId)
+    if (roomId && Name) {
+        localStorage.setItem('Name', Name);
+        ipcRenderer.send('navigate-to-room', roomId);  // Gửi yêu cầu đến main process
+    } else {
+        alert('Please enter a Room ID and Name!');
+    }
+}
+
 
 function generateRandomCode() {
     const characters = 'abcdefghijklmnopqrstuvwxyz';

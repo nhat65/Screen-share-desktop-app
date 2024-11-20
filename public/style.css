@@ -11,6 +11,10 @@ body {
     max-width: none !important;
     height: 300px !important;
     object-fit: cover !important;
+    
+}
+
+.video-wrapper{
     transform: scaleX(-1);
 }
 

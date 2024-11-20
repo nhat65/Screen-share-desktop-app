@@ -1,5 +1,5 @@
 const io = require('socket.io-client');
-const socket = io('http://localhost:3000'); //socket connection
+const socket = io('ws://26.203.183.51:3000'); //socket connection
 socket.on('connect', () => {
   console.log("Connected to socket server.");
 });
@@ -54,7 +54,7 @@ ipcRenderer.on('room-id', (event, roomId) => {
 
 peer = new Peer(undefined, {
   port: 3000,
-  host: 'localhost',
+  host: '26.203.183.51',
   path: '/peerjs',
   secure: false
 });
@@ -68,16 +68,17 @@ navigator.mediaDevices.getUserMedia({
   myVideoStream = stream;
 
   peer.on('call', call => {
-
-    console.log("answered");
-    console.log(currentPeer.length)
+    console.log("answered");  
     call.answer(stream);
     const video = document.createElement('video');
+
     call.on('stream', userVideoStream => {
+      console.log("Đã nhận được stream từ peer khác 1");
       addVideoStream(video, userVideoStream);
     });
 
     peers[call.peer] = call;
+    
     call.on('close', () => {
       video.remove()
     })
@@ -90,7 +91,6 @@ navigator.mediaDevices.getUserMedia({
       $('#user-list').append(
         `<li id="${user.userId}" class="flex items-center justify-between"> <span class="text-white">${user.username}</span></li>`
       );
-      console.log(user);
     }, 2000);
   })
 
@@ -105,6 +105,7 @@ peer.on('error', (error) => {
 
 peer.on('open', async id => {
   console.log("Peer open");
+  console.log(id)
   cUser = id;
   socket.emit('test');
   await socket.emit('join-room', ROOM_ID, id, YourName);
@@ -120,12 +121,14 @@ socket.on('user-disconnected', (userId, u, peerId, username) => {
 });
 
 
-const connectToNewUser = (userId, stream) => {
+const connectToNewUser = (userId, stream, roomId) => {
 
-  console.log('User-connected :-' + userId);
+  console.log('User-connected-script.js :-' + userId);
+  console.log('Stream: ' + stream)
   let call = peer.call(userId, stream);
   const video = document.createElement('video');
   call.on('stream', userVideoStream => {
+    console.log("Đã nhận được stream từ peer khác 2");
     addVideoStream(video, userVideoStream);
   })
   call.on('close', () => {

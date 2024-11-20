@@ -76,7 +76,7 @@
         <div class="w-1/2  flex items-center place-content-end mr-20">
             <div class="flex flex-col items-center space-y-4">
 
-                <video id="userVideo" autoplay playsinline class="rounded-lg w-auto h-80"></video>
+                <video id="userVideo" autoplay playsinline class="rounded-lg w-auto h-80 transform -scale-x-100"></video>
 
                 <div class="flex space-x-4">
                     <div id="toggleMic"
@@ -98,9 +98,9 @@
         <div class="w-1/2 flex items-center">
             <div class="flex flex-col items-center space-y-4">
                 <div class="flex">
-                    <input type="text" placeholder="  Enter room id"
+                    <input id="input-roomId" type="text" placeholder="  Enter room id" 
                         class=" w-64 px-3 py-2 bg-white border shadow-sm border-slate-300 placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-sky-500 block rounded-md sm:text-sm focus:ring-1">
-                    <div 
+                    <div onclick="joinRoom()"
                         class="ml-2 bg-sky-600 w-24 h-9 text-white rounded-md flex items-center justify-center hover:bg-sky-700 cursor-pointer caret-transparent space-x-2">
                         <i class="fa fa-sign-in" aria-hidden="true"></i>
                         <span>Join</span>
