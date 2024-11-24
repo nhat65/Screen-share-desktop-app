@@ -61,7 +61,7 @@ io.on('connect', socket =>{
 	console.log('New user connected:', socket.id);
 
 	socket.on('test', () => {
-		console.log("Testtttt");
+		console.log("Test socket server");
 	});
 	
 	socket.on('join-room',(roomId, userId, username) =>{
@@ -73,7 +73,7 @@ io.on('connect', socket =>{
 		userS.push(socket.id);
 		userI.push(userId);
 
-		socket.on('is-sharing', (isSharing, stream) => {
+		socket.on('is-sharing', (isSharing) => {
 			console.log(isSharing);
 			if(isSharing ==true){
 				socket.broadcast.to(roomId).emit('USER_SHARING',isSharing);

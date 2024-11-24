@@ -15,8 +15,9 @@ const myVideo = document.createElement('video');
 myVideo.removeAttribute('controls');
 const $ = require('jquery');
 const jQuery = require('jquery');
+const { connect } = require('mongoose');
 // myVideo.muted = true;
-let peers = {}, currentPeer = [];
+let peers = {}, currentPeer = []; connectedPeers = [];
 let userlist = [];
 let cUser;
 let roomId;
@@ -66,19 +67,27 @@ navigator.mediaDevices.getUserMedia({
 }).then(stream => {
   addVideoStream(myVideo, stream);
   myVideoStream = stream;
+  stream.isCamera = true;
+
 
   peer.on('call', call => {
-    console.log("answered");  
+    console.log("answered");
     call.answer(stream);
     const video = document.createElement('video');
 
     call.on('stream', userVideoStream => {
-      console.log("Đã nhận được stream từ peer khác 1");
-      addVideoStream(video, userVideoStream);
+      if (userVideoStream.isCamera) {
+        console.log("This is a camera stream");
+        addVideoStream(video, userVideoStream);
+      } else if (userVideoStream.isScreen) {
+        console.log("This is a screen stream");
+        setScreenSharingStream(userVideoStream);
+      }
+      console.log("no stream")
     });
 
     peers[call.peer] = call;
-    
+
     call.on('close', () => {
       video.remove()
     })
@@ -134,9 +143,12 @@ const connectToNewUser = (userId, stream, roomId) => {
   call.on('close', () => {
     video.remove()
   })
+  connectedPeers.push(userId);
   peers[userId] = call;
   currentPeer.push(call.peerConnection);
   console.log(currentPeer.length);
+
+  console.log("peer list: " + connectedPeers)
 }
 
 
@@ -328,31 +340,57 @@ const scrollToBottom = () => {
 }
 
 //screenShare
-// 
 
-window.screenShare = function (stream) {
+window.screenShare = function (screenStream) {
   // Thiết lập luồng chia sẻ màn hình từ stream được truyền vào
-  setScreenSharingStream(stream);
+  setScreenSharingStream(screenStream);
 
   isSharing = true;
-  socket.emit('is-sharing', isSharing);
+  // socket.emit('is-sharing', isSharing);
 
-  let videoTrack = stream.getVideoTracks()[0];
+  // let videoTrack = stream.getVideoTracks()[0];
 
   // Khi người dùng dừng chia sẻ màn hình
-  videoTrack.onended = function () {
-    stopScreenShare();
-  };
+  // videoTrack.onended = function () {
+  //   stopScreenShare();
+  // };
 
   // Thay thế track video của tất cả peer hiện tại
-  for (let i = 0; i < currentPeer.length; i++) {
-    let sender = currentPeer[i].getSenders().find(s => s.track.kind === videoTrack.kind);
+  // for (let i = 0; i < currentPeer.length; i++) {
+  //   let sender = currentPeer[i].getSenders().find(s => s.track.kind === videoTrack.kind);
 
-    if (sender) {
-      sender.replaceTrack(videoTrack);
-    }
+  //   if (sender) {
+  //     sender.replaceTrack(videoTrack);
+  //   }
+  // }
+
+
+  screenStream.isScreen = true;
+
+  if(screenStream){
+    connectedPeers.forEach((peerId) => {
+      const call = peer.call(peerId, screenStream)
+      console.log('share screen')
+      console.log(screenStream.isScreen)
+    })
   }
 };
+
+function stopScreenSharing(screenStream) {
+  // Dừng tất cả track của screenStream
+  screenStream.getTracks().forEach(track => track.stop());
+
+  // Xóa screenStream khỏi peer connections
+  for (let peerId in peers) {
+    const call = peers[peerId];
+    call.peerConnection.getSenders().forEach(sender => {
+      if (sender.track && sender.track.kind === 'video' && sender.track === screenStream.getVideoTracks()[0]) {
+        call.peerConnection.removeTrack(sender);
+      }
+    });
+  }
+}
+
 
 
 function setScreenSharingStream(stream) {
@@ -530,7 +568,7 @@ window.screenShare1 = function () {
   document.getElementById('modalOverlay').classList.add('active');
 }
 
-document.getElementById('closeModal').addEventListener('click', function() {
+document.getElementById('closeModal').addEventListener('click', function () {
   document.getElementById('modalOverlay').classList.remove('active');
 });
 

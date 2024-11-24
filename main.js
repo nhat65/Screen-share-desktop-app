@@ -41,7 +41,6 @@ app.on('window-all-closed', () => {
 // Điều hướng đến Room
 ipcMain.on('navigate-to-room', (event, data) => {
   const roomId = data;
-  console.log("Room id: " + roomId);
   mainWindow.loadFile(path.join(__dirname, 'views', 'room.html')).then(() => {
     // Gửi roomId đến renderer sau khi tải xong room.html
     mainWindow.webContents.send('room-id', roomId);
