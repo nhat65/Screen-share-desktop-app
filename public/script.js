@@ -26,6 +26,7 @@ let Name;
 let YourName;
 let isSharing = false;
 let ROOM_ID;
+let screenStream = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   Name = localStorage.getItem('Name');
@@ -126,7 +127,7 @@ socket.on('user-disconnected', (userId, u, peerId, username) => {
   console.log('user ID fetch Disconnect: ' + userId);
   setTimeout(() => {
     alert(username + ' has left the room!');
-  }, 3000);
+  }, 2000);
 });
 
 
@@ -341,7 +342,8 @@ const scrollToBottom = () => {
 
 //screenShare
 
-window.screenShare = function (screenStream) {
+window.screenShare = function (stream) {
+  screenStream = stream
   // Thiết lập luồng chia sẻ màn hình từ stream được truyền vào
   setScreenSharingStream(screenStream);
 
@@ -439,15 +441,24 @@ function stopScreenShare() {
   videoGrid.className = "";
   videoGrid.classList.add("grid", "grid-cols-1", "sm:grid-cols-2", "lg:grid-cols-3", "gap-3", "flex-grow");
 
+  if(screenStream){
+    screenStream.getTracks().forEach(track => track.stop());
+    screenStream = null;
+  }
+
   isSharing = false;
   socket.emit('is-sharing', isSharing);
-  let videoTrack = myVideoStream.getVideoTracks()[0];
-  for (let x = 0; x < currentPeer.length; x++) {
-    let sender = currentPeer[x].getSenders().find(function (s) {
-      return s.track.kind == videoTrack.kind;
-    })
-    sender.replaceTrack(videoTrack);
-  }
+
+  
+
+  // let videoTrack = myVideoStream.getVideoTracks()[0];
+
+  // for (let x = 0; x < currentPeer.length; x++) {
+  //   let sender = currentPeer[x].getSenders().find(function (s) {
+  //     return s.track.kind == videoTrack.kind;
+  //   })
+  //   sender.replaceTrack(videoTrack);
+  // }
 }
 
 //raised hand
