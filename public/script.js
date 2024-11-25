@@ -75,12 +75,14 @@ navigator.mediaDevices.getUserMedia({
     console.log("answered");
     call.answer(stream);
     const video = document.createElement('video');
+    let streamType = call.metadata.type;
+    console.log(streamType)
 
     call.on('stream', userVideoStream => {
-      if (userVideoStream.isCamera) {
+      if (streamType == 'camera') {
         console.log("This is a camera stream");
         addVideoStream(video, userVideoStream);
-      } else if (userVideoStream.isScreen) {
+      } else if (streamType == 'screen') {
         console.log("This is a screen stream");
         setScreenSharingStream(userVideoStream);
       }
@@ -135,7 +137,9 @@ const connectToNewUser = (userId, stream, roomId) => {
 
   console.log('User-connected-script.js :-' + userId);
   console.log('Stream: ' + stream)
-  let call = peer.call(userId, stream);
+  let call = peer.call(userId, stream, {
+    metadata: { type: 'camera' }
+  });
   const video = document.createElement('video');
   call.on('stream', userVideoStream => {
     console.log("Đã nhận được stream từ peer khác 2");
@@ -371,7 +375,9 @@ window.screenShare = function (stream) {
 
   if(screenStream){
     connectedPeers.forEach((peerId) => {
-      const call = peer.call(peerId, screenStream)
+      const call = peer.call(peerId, screenStream, {
+        metadata: { type: 'screen' }
+      });
       console.log('share screen')
       console.log(screenStream.isScreen)
     })
