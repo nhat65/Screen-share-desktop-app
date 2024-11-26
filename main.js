@@ -1,7 +1,15 @@
-const { app, BrowserWindow, ipcMain, dialog, desktopCapturer } = require('electron'); // Thêm ipcMain
+const { app, BrowserWindow, ipcMain, dialog, desktopCapturer } = require('electron'); 
 const path = require('path');
 const ejs = require('ejs');
 const fs = require('fs');
+let store
+(async () => {
+  const Store = (await import('electron-store')).default;
+  store = new Store();
+
+  // Các mã khác của bạn sử dụng store
+  console.log(store);
+})();
 
 let mainWindow;
 
@@ -64,21 +72,20 @@ const User = require('./models/schema')
 
 ipcMain.on('login-form-submit', async (event, { email, password }) => {
   try {
-    // Tìm người dùng theo email
-    console.log(email)
+
     const user = await User.findOne({ email })
     console.log(user)
+
     if (!user) {
       return event.sender.send('login-response', { success: false, message: 'Email hoặc mật khẩu không đúng!' });
     }
 
-    // So sánh mật khẩu
     if (user.password !== password) {
       return event.sender.send('login-response', { success: false, message: 'Email hoặc mật khẩu không đúng!' });
     }
 
-    // Đăng nhập thành công
     console.log('đăng nhập thành công')
+    store.set('userSession', { userId: user._id });
 
     // Tải trang home
     mainWindow.loadFile(path.join(__dirname, 'views', 'home.html'));
@@ -101,8 +108,33 @@ ipcMain.on('register-form-submit', async (event, { name, email, password, re_pas
   }
 
 });
+//<--------------------------------------------Session management--------------------------------------------------------------------------->
+ipcMain.handle('get-user-session', async () => {
+  const session = store.get('userSession');
+  return session ? session : { success: false, message: 'No session found' };
+});
 
 
+ipcMain.handle('delete-user-session', async () => {
+  store.delete('userSession');
+  return { success: true, message: 'Session deleted successfully' };
+});
+
+//<----------------------------------------------------------------------------------------------------------------------->
+
+ipcMain.handle('get-user', async () => {
+  try {
+    const session = store.get('userSession');
+    const userId = session.userId;
+
+    // Tìm người dùng trong cơ sở dữ liệu theo userId
+    const user = await User.findById(userId);
+    return user ? user : null;
+  } catch (error) {
+    console.error('Get user error:', error);
+    throw error; // Gửi lỗi cho renderer nếu cần
+  }
+});
 
 ipcMain.handle('getSources', async () => {
   return await desktopCapturer.getSources({ types: ['window', 'screen'] })
@@ -119,3 +151,6 @@ ipcMain.handle('getOperatingSystem', () => {
   return process.platform
 })
 
+ipcMain.on('logout', () => {
+  mainWindow.loadFile(path.join(__dirname, 'views', 'login.html'));
+});

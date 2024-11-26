@@ -16,11 +16,8 @@ const peerServer = ExpressPeerServer(server, {
 const path = require('path');
 
 const userList = [];
-
  
 app.use('/peerjs', peerServer);
-
-
 
 app.set('view engine', 'ejs');
 app.use(express.static('public'));

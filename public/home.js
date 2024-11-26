@@ -1,36 +1,46 @@
 const videoElement = document.getElementById('userVideo');
 const toggleMute = document.getElementById('toggleMic');
 const toggleVideo = document.getElementById('toggleVideo');
+const { getUser } = require('../controllers/userController')
 
 let Name;
 let roomId;
 let stream;
-// Sử dụng cú pháp mới của jQuery cho việc xử lý sự kiện click
-const { ipcRenderer } = require('electron'); // Đảm bảo đã cài Electron
 
+const { ipcRenderer } = require('electron');
 
-
-function createRoom() {
-    // Name = document.getElementById('name').value.trim();
-    Name = "Nhat";
-    roomId = generateRandomCode();
-    if (roomId && Name) {
-        localStorage.setItem('Name', Name);
-        ipcRenderer.send('navigate-to-room', roomId);  // Gửi yêu cầu đến main process
-    } else {
-        alert('Please enter a Room ID and Name!');
+async function createRoom() {
+    try {
+        const user = await getUser();
+        console.log(user._doc.name)
+        Name = user._doc.name;
+        roomId = generateRandomCode();
+        if (roomId && Name) {
+            localStorage.setItem('Name', Name);
+            ipcRenderer.send('navigate-to-room', roomId);  // Gửi yêu cầu đến main process
+        } else {
+            alert('Please enter a Room ID and Name!');
+        }
+    } catch (error) {
+        console.log('Create room error: ' + error)
     }
+
 }
 
-function joinRoom() {
-    Name = "Nhat";
-    roomId = document.getElementById('input-roomId').value;
-    console.log(roomId)
-    if (roomId && Name) {
-        localStorage.setItem('Name', Name);
-        ipcRenderer.send('navigate-to-room', roomId);  // Gửi yêu cầu đến main process
-    } else {
-        alert('Please enter a Room ID and Name!');
+async function joinRoom() {
+    try {
+        const user = await getUser();
+        console.log(user._doc.name)
+        Name = user._doc.name;
+        roomId = document.getElementById('input-roomId').value;
+        if (roomId && Name) {
+            localStorage.setItem('Name', Name);
+            ipcRenderer.send('navigate-to-room', roomId);  // Gửi yêu cầu đến main process
+        } else {
+            alert('Please enter a Room ID and Name!');
+        }
+    } catch (error) {
+        console.log('Join room error: ' + error)
     }
 }
 
@@ -159,3 +169,8 @@ const setVideoButton = () => {
 }
 
 toggleVideo.addEventListener('click', videoOnOff);
+
+
+const logout = () => {
+    ipcRenderer.send('logout');
+}
