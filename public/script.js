@@ -97,8 +97,13 @@ navigator.mediaDevices.getUserMedia({
   });
 
   socket.on('user-connected', (user) => {
-    setTimeout(() => {
 
+    const videoNum = videoCount()
+    if(videoNum == 1){ 
+      setGroupScreen()
+    }
+
+    setTimeout(() => {
       connectToNewUser(user.userId, stream, roomId);
       $('#user-list').append(
         `<li id="${user.userId}" class="flex items-center justify-between"> <span class="text-white">${user.username}</span></li>`
@@ -156,28 +161,43 @@ const connectToNewUser = (userId, stream, roomId) => {
   console.log("peer list: " + connectedPeers)
 }
 
+function videoCount(){
+  const videoGrid = document.getElementById('video-grid');
+  const videoCount = videoGrid.querySelectorAll('video').length
+
+  return videoCount;
+}
 
 const addVideoStream = (video, stream) => {
   // Tạo một div để bọc video
   const videoWrapper = document.createElement('div');
-  videoWrapper.classList.add('video-wrapper'); // Thêm class để dễ css
+  videoWrapper.classList.add('video-wrapper');
   videoWrapper.style.position = 'relative';
+  if(videoCount() == 1 ){
+    setGroupScreen()
+  }else{
+    videoWrapper.style.width = '1130px'
+  }
 
   video.srcObject = stream;
   video.controls = false;
+
+  video.classList.add('user-video');
+
   video.addEventListener('loadedmetadata', () => {
     video.play();
+
+    // Thêm video vào div
+  videoWrapper.appendChild(video);
+
+  // Thêm div vào videoGrid
+  videoGrid.append(videoWrapper);
   });
 
   if (video === myVideo) {
     video.muted = true;
   }
-
-  // Thêm video vào div
-  videoWrapper.appendChild(video);
-
-  // Thêm div vào videoGrid
-  videoGrid.append(videoWrapper);
+ 
 }
 
 
@@ -406,6 +426,11 @@ function setScreenSharingStream(stream) {
   let mainVideos = document.querySelector(".main__videos");
   let video = document.getElementById('video-share');
   let videoCam = document.querySelectorAll('#video-grid video');
+  const userVideos = document.querySelectorAll('.video-wrapper');
+  userVideos.forEach(video => {
+    video.style.removeProperty('width');
+  });
+  
 
   videoCam.forEach(video1 => {
     video1.style.setProperty('max-width', '100%', 'important');
@@ -441,11 +466,22 @@ function stopScreenShare() {
   let videoCam = document.querySelectorAll('#video-grid video');
   videoCam.forEach(video => {
     video.style = "";
+    video.classList.remove('p-1');
   });
 
   //style video grid
-  videoGrid.className = "";
-  videoGrid.classList.add("grid", "grid-cols-1", "sm:grid-cols-2", "lg:grid-cols-3", "gap-3", "flex-grow");
+const count = videoCount();
+  if(count > 1){
+    videoGrid.className = "";
+    videoGrid.classList.add("grid", "grid-cols-1", "sm:grid-cols-2", "lg:grid-cols-3", "gap-3", "flex-grow");
+  }else{
+    videoGrid.className = "";
+    const userVideos = document.querySelectorAll('.video-wrapper');
+userVideos.forEach(video => {
+  video.style.setProperty('width', '1130px');
+});
+    
+  }
 
   if(screenStream){
     screenStream.getTracks().forEach(track => track.stop());
@@ -465,6 +501,19 @@ function stopScreenShare() {
   //   })
   //   sender.replaceTrack(videoTrack);
   // }
+}
+
+function setGroupScreen(){
+const videoGrid = document.getElementById('video-grid');
+videoGrid.classList.add('grid', 'grid-cols-1', 'sm:grid-cols-2', 'lg:grid-cols-3', 'gap-3', 'flex-grow', 'px-3');
+
+const userVideos = document.querySelectorAll('.video-wrapper');
+userVideos.forEach(video => {
+  video.style.removeProperty('width');
+});
+
+
+
 }
 
 //raised hand

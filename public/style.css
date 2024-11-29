@@ -3,15 +3,26 @@ body {
     padding: 0;
 }
 
+/* img, video {
+    max-width: none !important;
+    height: auto !important;
+} */
+
 /* #video-grid {
     display: flex;
 } */ */
 
-#video-grid video{
-    max-width: none !important;
-    height: 300px !important;
+#video-grid .video-wrapper video{
+    width: 100%;
+    height: auto !important;
+    object-fit: cover !important;   
+}
+
+.user-video{
+    width: 100%;
+    height: auto !important;
     object-fit: cover !important;
-    
+    border-radius: 10px;
 }
 
 .video-wrapper{
