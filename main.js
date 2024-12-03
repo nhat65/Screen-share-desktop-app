@@ -48,10 +48,10 @@ app.on('window-all-closed', () => {
 
 // Điều hướng đến Room
 ipcMain.on('navigate-to-room', (event, data) => {
-  const roomId = data;
+  console.log(data)
   mainWindow.loadFile(path.join(__dirname, 'views', 'room.html')).then(() => {
     // Gửi roomId đến renderer sau khi tải xong room.html
-    mainWindow.webContents.send('room-id', roomId);
+    mainWindow.webContents.send('room-id', data);
 
   }).catch((err) => {
     console.error("Error loading room.html:", err);

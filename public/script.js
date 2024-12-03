@@ -27,31 +27,19 @@ let YourName;
 let isSharing = false;
 let ROOM_ID;
 let screenStream = null;
-
-document.addEventListener('DOMContentLoaded', () => {
-  Name = localStorage.getItem('Name');
-
-  if (Name && Name !== 'null') {
-    YourName = Name;
-    localStorage.removeItem('Name');
-  } else {
-    let path = window.location.pathname;
-    roomId = path.substring(1);
-    localStorage.setItem('roomId', roomId);
-
-    window.location.href = `/home`;
-    alert('Enter your name to join the room');
-
-  }
-});
-
-console.log(navigator.mediaDevices);  // Kiểm tra mediaDevices
+let streamStatu
 
 // Lắng nghe sự kiện room-id
-ipcRenderer.on('room-id', (event, roomId) => {
+ipcRenderer.on('room-id', (event, data) => {
+  const { roomId, Name, streamStatus } = data;
+
   ROOM_ID = roomId;
-  document.getElementById('room__id').innerText = `Room ID: ${roomId}`;
+  YourName = Name;
+  streamStatu = streamStatus;
+
+  document.getElementById('room__id').innerText = `Room ID: ${ROOM_ID}`;
   console.log("room id: " + roomId);
+  console.log(streamStatu.video)
 });
 
 peer = new Peer(undefined, {
@@ -66,9 +54,18 @@ navigator.mediaDevices.getUserMedia({
   video: true,
   audio: true
 }).then(stream => {
+
   addVideoStream(myVideo, stream);
   myVideoStream = stream;
-  stream.isCamera = true;
+  
+  if (streamStatu.video == false) {
+    videoOnOff()
+    userVideoOff()
+  }
+
+  if (streamStatu.audio == false) {
+    muteUnmute()
+  }
 
 
   peer.on('call', call => {
@@ -99,14 +96,21 @@ navigator.mediaDevices.getUserMedia({
   socket.on('user-connected', (user) => {
 
     const videoNum = videoCount()
-    if(videoNum == 1){ 
+    if (videoNum == 1) {
       setGroupScreen()
     }
-
     setTimeout(() => {
       connectToNewUser(user.userId, stream, roomId);
       $('#user-list').append(
-        `<li id="${user.userId}" class="flex items-center justify-between"> <span class="text-white">${user.username}</span></li>`
+        `<li id="${user.userId}" class="flex items-center justify-between"> 
+        <span class="text-white">${user.username}</span>
+        <div class="Mute__button_list ml-auto text-white">
+                <i class="fas fa-microphone"></i>
+            </div>
+            <div class="Video__button_list px-4 text-white">
+                <i class="fas fa-video "></i> 
+            </div>
+        </li>`
       );
     }, 2000);
   })
@@ -131,7 +135,8 @@ peer.on('open', async id => {
 socket.on('user-disconnected', (userId, u, peerId, username) => {
   $(`#${peerId}`).remove();
   if (peers[userId]) peers[userId].close();
-  console.log('user ID fetch Disconnect: ' + userId);
+  if (videoCount() == 1)
+    console.log('user ID fetch Disconnect: ' + userId);
   setTimeout(() => {
     alert(username + ' has left the room!');
   }, 2000);
@@ -147,7 +152,7 @@ const connectToNewUser = (userId, stream, roomId) => {
   });
   const video = document.createElement('video');
   call.on('stream', userVideoStream => {
-    console.log("Đã nhận được stream từ peer khác 2");
+    console.log("Đã nhận được stream từ 150");
     addVideoStream(video, userVideoStream);
   })
   call.on('close', () => {
@@ -161,7 +166,7 @@ const connectToNewUser = (userId, stream, roomId) => {
   console.log("peer list: " + connectedPeers)
 }
 
-function videoCount(){
+function videoCount() {
   const videoGrid = document.getElementById('video-grid');
   const videoCount = videoGrid.querySelectorAll('video').length
 
@@ -169,37 +174,51 @@ function videoCount(){
 }
 
 const addVideoStream = (video, stream) => {
+  console.log('add video')
   // Tạo một div để bọc video
   const videoWrapper = document.createElement('div');
   videoWrapper.classList.add('video-wrapper');
   videoWrapper.style.position = 'relative';
-  if(videoCount() == 1 ){
-    setGroupScreen()
-  }else{
-    videoWrapper.style.width = '1130px'
+
+  // Tạo ID ngẫu nhiên gồm 4 ký tự
+  const randomId = Math.random().toString(36).substring(2, 6); // 4 ký tự ngẫu nhiên
+  videoWrapper.id = peer.id; // Gán ID cho videoWrapper
+
+  if (videoCount() == 1) {
+    setGroupScreen();
+  } else {
+    videoWrapper.style.width = '1130px';
   }
 
   video.srcObject = stream;
   video.controls = false;
-
   video.classList.add('user-video');
 
   video.addEventListener('loadedmetadata', () => {
     video.play();
 
     // Thêm video vào div
-  videoWrapper.appendChild(video);
+    videoWrapper.appendChild(video);
 
-  // Thêm div vào videoGrid
-  videoGrid.append(videoWrapper);
+    // Thêm div vào videoGrid
+    videoGrid.append(videoWrapper);
   });
 
   if (video === myVideo) {
     video.muted = true;
   }
- 
+};
+
+
+const userMicOn = () => {
+  const html = `<i class="fas fa-microphone"></i>`;
+  document.querySelector('.Mute__button_list').innerHTML = html;
 }
 
+const userMicOff = () => {
+  const html = `<i class="fas fa-microphone-slash" style="color:red;"></i>`;
+  document.querySelector('.Mute__button_list').innerHTML = html;
+}
 
 
 const muteUnmute = () => {
@@ -207,7 +226,9 @@ const muteUnmute = () => {
   if (enabled) {
     myVideoStream.getAudioTracks()[0].enabled = false;
     setMuteButton();
+    userMicOff()
   } else {
+    userMicOn()
     setUnmuteButton();
     myVideoStream.getAudioTracks()[0].enabled = true;
   }
@@ -228,17 +249,32 @@ const setMuteButton = () => {
 }
 
 
+//----------------------------------------------------------------------------------
+
 const videoOnOff = () => {
   const enabled = myVideoStream.getVideoTracks()[0].enabled;
   if (enabled) {
     myVideoStream.getVideoTracks()[0].enabled = false;
     unsetVideoButton();
+    userVideoOff()
+    console.log('un set')
     socket.emit('camera-off', { userId: peer.id });
   } else {
     setVideoButton();
+    userVideoOn()
     myVideoStream.getVideoTracks()[0].enabled = true;
     socket.emit('camera-on', { userId: peer.id });
   }
+}
+
+const userVideoOn = () => {
+  const html = `<i class="fas fa-video"></i>`;
+  document.querySelector('.Video__button_list').innerHTML = html;
+}
+
+const userVideoOff = () => {
+  const html = `<i class="fas fa-video-slash" style="color:red;"></i>`;
+  document.querySelector('.Video__button_list').innerHTML = html;
 }
 
 const unsetVideoButton = () => {
@@ -247,6 +283,8 @@ const unsetVideoButton = () => {
   document.querySelector('.Video__button').innerHTML = html;
 
   // Chuyển màn hình video sang màu xám
+  const videoId = peer.id;
+
   const videoElement = document.querySelector('video');
   videoElement.style.filter = 'grayscale(100%)'; // Chuyển màu video thành màu xám
   videoElement.style.backgroundColor = 'gray'; // Đặt nền video là màu xám
@@ -255,7 +293,7 @@ const unsetVideoButton = () => {
   // Thêm icon ở giữa màn hình màu xám
   const overlay = document.createElement('div');
   overlay.classList.add('camera-off-overlay');
-  overlay.innerHTML = `<i class="fas fa-video-slash" style="font-size: 48px; color: red;"></i>`;
+  overlay.innerHTML = `<i class="fas fa-video-slash transform -scale-x-100" style="font-size: 48px; color: red;"></i>`;
   overlay.style.position = 'absolute';
   overlay.style.top = '50%';
   overlay.style.left = '50%';
@@ -278,6 +316,7 @@ const setVideoButton = () => {
   document.querySelector('.Video__button').innerHTML = html;
 
   // Xóa màu xám và icon khi camera bật
+  const videoId = peer.id;
   const videoElement = document.querySelector('video');
   videoElement.style.filter = 'none';
   videoElement.style.backgroundColor = 'transparent';
@@ -290,16 +329,9 @@ const setVideoButton = () => {
   console.log("Cammera Mode ON");
 }
 
-socket.on('camera-off', (data) => {
-  socket.broadcast.emit('user-camera-off', data);
-});
-
-socket.on('camera-on', (data) => {
-  socket.broadcast.emit('user-camera-on', data);
-});
-
 socket.on('user-camera-off', (data) => {
-  const videoElement = document.getElementById(`video-${data.userId}`);
+  const video = document.getElementById(data.userId);
+  const videoElement = video.querySelector('video');
   if (videoElement) {
     const overlay = document.createElement('div');
     overlay.classList.add('camera-off-overlay');
@@ -316,7 +348,8 @@ socket.on('user-camera-off', (data) => {
 });
 
 socket.on('user-camera-on', (data) => {
-  const videoElement = document.getElementById(`video-${data.userId}`);
+  const video = document.getElementById(data.userId);
+  const videoElement = video.querySelector('video');
   if (videoElement) {
     const overlay = videoElement.parentElement.querySelector('.camera-off-overlay');
     if (overlay) {
@@ -325,7 +358,7 @@ socket.on('user-camera-on', (data) => {
   }
 });
 
-
+//-----------------------------------------------------------------------------------------
 
 const disconnectNow = () => {
   ipcRenderer.send('navigate-to-home');
@@ -393,7 +426,7 @@ window.screenShare = function (stream) {
 
   screenStream.isScreen = true;
 
-  if(screenStream){
+  if (screenStream) {
     connectedPeers.forEach((peerId) => {
       const call = peer.call(peerId, screenStream, {
         metadata: { type: 'screen' }
@@ -430,7 +463,7 @@ function setScreenSharingStream(stream) {
   userVideos.forEach(video => {
     video.style.removeProperty('width');
   });
-  
+
 
   videoCam.forEach(video1 => {
     video1.style.setProperty('max-width', '100%', 'important');
@@ -470,20 +503,20 @@ function stopScreenShare() {
   });
 
   //style video grid
-const count = videoCount();
-  if(count > 1){
+  const count = videoCount();
+  if (count > 1) {
     videoGrid.className = "";
     videoGrid.classList.add("grid", "grid-cols-1", "sm:grid-cols-2", "lg:grid-cols-3", "gap-3", "flex-grow");
-  }else{
+  } else {
     videoGrid.className = "";
     const userVideos = document.querySelectorAll('.video-wrapper');
-userVideos.forEach(video => {
-  video.style.setProperty('width', '1130px');
-});
-    
+    userVideos.forEach(video => {
+      video.style.setProperty('width', '1130px');
+    });
+
   }
 
-  if(screenStream){
+  if (screenStream) {
     screenStream.getTracks().forEach(track => track.stop());
     screenStream = null;
   }
@@ -491,7 +524,7 @@ userVideos.forEach(video => {
   isSharing = false;
   socket.emit('is-sharing', isSharing);
 
-  
+
 
   // let videoTrack = myVideoStream.getVideoTracks()[0];
 
@@ -503,17 +536,28 @@ userVideos.forEach(video => {
   // }
 }
 
-function setGroupScreen(){
-const videoGrid = document.getElementById('video-grid');
-videoGrid.classList.add('grid', 'grid-cols-1', 'sm:grid-cols-2', 'lg:grid-cols-3', 'gap-3', 'flex-grow', 'px-3');
+function setGroupScreen() {
+  const videoGrid = document.getElementById('video-grid');
+  videoGrid.classList.add('grid', 'grid-cols-1', 'sm:grid-cols-2', 'lg:grid-cols-3', 'gap-3', 'flex-grow', 'px-3');
 
-const userVideos = document.querySelectorAll('.video-wrapper');
-userVideos.forEach(video => {
-  video.style.removeProperty('width');
-});
+  const userVideos = document.querySelectorAll('.video-wrapper');
+  userVideos.forEach(video => {
+    video.style.removeProperty('width');
+  });
+
+}
 
 
+function setOneScreen() {
+  const videoGrid = document.getElementById('video-grid');
+  videoGrid.className = '';
 
+  const userVideos = document.querySelectorAll('.video-wrapper');
+
+  userVideos.forEach(video => {
+    console.log(video); // In ra để kiểm tra phần tử
+    video.style.width = '1130px'; // Thêm width vào inline style của thẻ
+  });
 }
 
 //raised hand
@@ -641,7 +685,15 @@ document.getElementById('closeModal').addEventListener('click', function () {
 socket.on('ONLINE_LIST', userList => {
   userList.forEach(user => {
     $('#user-list').append(
-      `<li id="${user.userId}" class="flex items-center justify-between"> <span class = "text-white">${user.username}</span></li>`
+      `<li id="${user.userId}" class="flex items-center justify-between"> 
+        <span class="text-white">${user.username}</span>
+        <div class="Mute__button_list ml-auto text-white">
+                <i class="fas fa-microphone "></i>
+            </div>
+            <div class="Video__button_list px-4 text-white">
+                <i class="fas fa-video "></i> 
+            </div>
+        </li>`
     );
   });
 })

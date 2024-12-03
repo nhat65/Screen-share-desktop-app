@@ -6,6 +6,9 @@ const { getUser } = require('../controllers/userController')
 let Name;
 let roomId;
 let stream;
+let isMicOn = true;
+let isVideoOn = true;
+let streamStatus = { video: isVideoOn, audio: isMicOn };
 
 const { ipcRenderer } = require('electron');
 
@@ -15,9 +18,9 @@ async function createRoom() {
         console.log(user._doc.name)
         Name = user._doc.name;
         roomId = generateRandomCode();
+
         if (roomId && Name) {
-            localStorage.setItem('Name', Name);
-            ipcRenderer.send('navigate-to-room', roomId);  // Gửi yêu cầu đến main process
+            ipcRenderer.send('navigate-to-room', { roomId, Name, streamStatus });  // Gửi yêu cầu đến main process
         } else {
             alert('Please enter a Room ID and Name!');
         }
@@ -33,9 +36,9 @@ async function joinRoom() {
         console.log(user._doc.name)
         Name = user._doc.name;
         roomId = document.getElementById('input-roomId').value;
+
         if (roomId && Name) {
-            localStorage.setItem('Name', Name);
-            ipcRenderer.send('navigate-to-room', roomId);  // Gửi yêu cầu đến main process
+            ipcRenderer.send('navigate-to-room', roomId, Name);  // Gửi yêu cầu đến main process
         } else {
             alert('Please enter a Room ID and Name!');
         }
@@ -80,42 +83,46 @@ async function getUserMedia() {
 getUserMedia();
 
 // Xử lý bật/tắt microphone
-let isMuted = false;
-toggleMute.addEventListener('click', () => {
-    isMuted = !isMuted;
-    stream.getAudioTracks()[0].enabled = !isMuted;
 
-    if (isMuted) {
+
+toggleMute.addEventListener('click', () => {
+    isMicOn = !isMicOn;
+    stream.getAudioTracks()[0].enabled = isMicOn;
+
+    if (isMicOn) {
         const html = `
-    <i class="fas fa-microphone-slash"></i>
-    <span>Unmute</span>
+      <i class="fas fa-microphone"></i>
+      <span>Mute</span>
   `;
         toggleMute.innerHTML = html;
     } else {
         const html = `
-    <i class="fas fa-microphone"></i>
-    <span>Mute</span>
+      <i class="fas fa-microphone-slash"></i>
+      <span>Unmute</span>
   `;
         toggleMute.innerHTML = html;
     }
 
     // toggleMute.querySelector('span').textContent = isMuted ? 'Unmute' : 'Mute';
-    console.log('Microphone:', isMuted ? 'Muted' : 'Unmuted');
+    console.log('Microphone:', isMicOn ? 'On' : 'Off');
+    streamStatus = { video: isVideoOn, audio: isMicOn };
 });
 
 // Xử lý bật/tắt camera
-let isVideoOn = true;
 
 
 const videoOnOff = () => {
     const enabled = stream.getVideoTracks()[0].enabled;
     if (enabled) {
+        isVideoOn = false;
         stream.getVideoTracks()[0].enabled = false;
         unsetVideoButton();
     } else {
+        isVideoOn = true;
         setVideoButton();
         stream.getVideoTracks()[0].enabled = true;
     }
+    streamStatus = { video: isVideoOn, audio: isMicOn };
 }
 
 

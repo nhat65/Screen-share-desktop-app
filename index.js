@@ -109,6 +109,14 @@ io.on('connect', socket =>{
 			
 		})
 
+		socket.on('camera-off', (data) => {
+			socket.broadcast.emit('user-camera-off', data);
+		  });
+		  
+		  socket.on('camera-on', (data) => {
+			socket.broadcast.emit('user-camera-on', data);
+		  });
+
 	    socket.on('disconnect', () =>{
 			const index = userList.findIndex(e => e.userId === socket.userId);
 			userList.splice(index, 1);
