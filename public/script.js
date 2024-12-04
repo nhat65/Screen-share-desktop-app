@@ -55,9 +55,9 @@ navigator.mediaDevices.getUserMedia({
   audio: true
 }).then(stream => {
 
-  addVideoStream(myVideo, stream);
+  addVideoStream(myVideo, stream, peer.id);
   myVideoStream = stream;
-  
+
   if (streamStatu.video == false) {
     videoOnOff()
     userVideoOff()
@@ -76,14 +76,16 @@ navigator.mediaDevices.getUserMedia({
     console.log(streamType)
 
     call.on('stream', userVideoStream => {
+      const callerId = call.peer;
+      console.log(callerId)
+
       if (streamType == 'camera') {
         console.log("This is a camera stream");
-        addVideoStream(video, userVideoStream);
+        addVideoStream(video, userVideoStream, callerId);
       } else if (streamType == 'screen') {
         console.log("This is a screen stream");
         setScreenSharingStream(userVideoStream);
       }
-      console.log("no stream")
     });
 
     peers[call.peer] = call;
@@ -133,10 +135,16 @@ peer.on('open', async id => {
 })
 
 socket.on('user-disconnected', (userId, u, peerId, username) => {
-  $(`#${peerId}`).remove();
+  // $(`#${peerId}`).remove();
+  // console.log(peerId)
+
+  const escapedPeerId = CSS.escape(peerId);
+  const elements = document.querySelectorAll(`[id='${escapedPeerId}']`);
+  elements.forEach(element => element.remove());
+
   if (peers[userId]) peers[userId].close();
-  if (videoCount() == 1)
-    console.log('user ID fetch Disconnect: ' + userId);
+  if (videoCount() == 1) { setOneScreen(peer.id) }
+  console.log('user ID fetch Disconnect: ' + userId);
   setTimeout(() => {
     alert(username + ' has left the room!');
   }, 2000);
@@ -153,7 +161,7 @@ const connectToNewUser = (userId, stream, roomId) => {
   const video = document.createElement('video');
   call.on('stream', userVideoStream => {
     console.log("Đã nhận được stream từ 150");
-    addVideoStream(video, userVideoStream);
+    addVideoStream(video, userVideoStream, userId);
   })
   call.on('close', () => {
     video.remove()
@@ -173,7 +181,7 @@ function videoCount() {
   return videoCount;
 }
 
-const addVideoStream = (video, stream) => {
+const addVideoStream = (video, stream, userId) => {
   console.log('add video')
   // Tạo một div để bọc video
   const videoWrapper = document.createElement('div');
@@ -182,7 +190,7 @@ const addVideoStream = (video, stream) => {
 
   // Tạo ID ngẫu nhiên gồm 4 ký tự
   const randomId = Math.random().toString(36).substring(2, 6); // 4 ký tự ngẫu nhiên
-  videoWrapper.id = peer.id; // Gán ID cho videoWrapper
+  videoWrapper.id = userId; // Gán ID cho videoWrapper
 
   if (videoCount() == 1) {
     setGroupScreen();
@@ -208,7 +216,7 @@ const addVideoStream = (video, stream) => {
     video.muted = true;
   }
 };
-
+//--User-mic----------------------------------------------------------------------------
 
 const userMicOn = () => {
   const html = `<i class="fas fa-microphone"></i>`;
@@ -227,10 +235,12 @@ const muteUnmute = () => {
     myVideoStream.getAudioTracks()[0].enabled = false;
     setMuteButton();
     userMicOff()
+    socket.emit('mic-off', { userId: peer.id });
   } else {
     userMicOn()
     setUnmuteButton();
     myVideoStream.getAudioTracks()[0].enabled = true;
+    socket.emit('mic-on', { userId: peer.id });
   }
 }
 
@@ -247,6 +257,48 @@ const setMuteButton = () => {
   document.querySelector('.Mute__button').innerHTML = html;
   console.log("Muted");
 }
+
+socket.on('user-mic-off', (data) => {
+  const escapedId = CSS.escape(data.userId);
+
+  const userList = document.getElementById('user-list')
+  const userIcon = userList.querySelector(`#${escapedId}`);
+
+  if (userIcon) {  // Kiểm tra userIcon có tồn tại không
+    const html = `<i class="fas fa-microphone-slash" style="color:red;"></i>`;
+    const videoButton = userIcon.querySelector('.Mute__button_list');  // Lấy thẻ Video__button
+
+    if (videoButton) {  // Kiểm tra xem phần tử có tồn tại
+      videoButton.innerHTML = html;  // Cập nhật nội dung
+    } else {
+      console.error('Không tìm thấy phần tử .Mute__button');
+    }
+  } else {
+    console.error(`Không tìm thấy phần tử với id: ${data.userId}`);
+  }
+
+})
+
+socket.on('user-mic-on', (data) => {
+  const escapedId = CSS.escape(data.userId);
+
+  const userList = document.getElementById('user-list')
+  const userIcon = userList.querySelector(`#${escapedId}`);
+
+  if (userIcon) {  // Kiểm tra userIcon có tồn tại không
+    const html = `<i class="fas fa-microphone"></i>`;
+    const videoButton = userIcon.querySelector('.Mute__button_list');  // Lấy thẻ Video__button
+
+    if (videoButton) {  // Kiểm tra xem phần tử có tồn tại
+      videoButton.innerHTML = html;  // Cập nhật nội dung
+    } else {
+      console.error('Không tìm thấy phần tử .Mute__button');
+    }
+  } else {
+    console.error(`Không tìm thấy phần tử với id: ${data.userId}`);
+  }
+
+})
 
 
 //----------------------------------------------------------------------------------
@@ -330,28 +382,63 @@ const setVideoButton = () => {
 }
 
 socket.on('user-camera-off', (data) => {
-  const video = document.getElementById(data.userId);
-  const videoElement = video.querySelector('video');
-  if (videoElement) {
+  console.log('User turn off camera' + data.userId)
+  const escapedId = CSS.escape(data.userId);
+  const video = document.querySelector(`#${escapedId} video`);
+
+  if (video) {
     const overlay = document.createElement('div');
     overlay.classList.add('camera-off-overlay');
-    overlay.innerHTML = `<i class="fas fa-video-slash" style="font-size: 48px; color: red;"></i>`;
+    overlay.innerHTML = `<i class="fas fa-video-slash transform -scale-x-100" style="font-size: 48px; color: red;"></i>`;
     overlay.style.position = 'absolute';
     overlay.style.top = '50%';
     overlay.style.left = '50%';
     overlay.style.transform = 'translate(-50%, -50%)';
     overlay.style.color = 'red';
 
-    videoElement.parentElement.style.position = 'relative';
-    videoElement.parentElement.appendChild(overlay);
+    video.parentElement.style.position = 'relative';
+    video.parentElement.appendChild(overlay);
+
+    const userList = document.getElementById('user-list')
+    const userIcon = userList.querySelector(`#${escapedId}`);
+
+    if (userIcon) {  // Kiểm tra userIcon có tồn tại không
+      const html = `<i class="fas fa-video-slash" style="color:red;"></i>`;
+      const videoButton = userIcon.querySelector('.Video__button_list');  // Lấy thẻ Video__button
+
+      if (videoButton) {  // Kiểm tra xem phần tử có tồn tại
+        videoButton.innerHTML = html;  // Cập nhật nội dung
+      } else {
+        console.error('Không tìm thấy phần tử .Video__button');
+      }
+    } else {
+      console.error(`Không tìm thấy phần tử với id: ${data.userId}`);
+    }
   }
 });
 
 socket.on('user-camera-on', (data) => {
-  const video = document.getElementById(data.userId);
-  const videoElement = video.querySelector('video');
-  if (videoElement) {
-    const overlay = videoElement.parentElement.querySelector('.camera-off-overlay');
+  const escapedId = CSS.escape(data.userId);
+  const video = document.querySelector(`#${escapedId} video`);
+
+  const userList = document.getElementById('user-list')
+  const userIcon = userList.querySelector(`#${escapedId}`);
+
+  if (userIcon) {  // Kiểm tra userIcon có tồn tại không
+    const html = `<i class="fas fa-video"></i>`;
+    const videoButton = userIcon.querySelector('.Video__button_list');  // Lấy thẻ Video__button
+
+    if (videoButton) {  // Kiểm tra xem phần tử có tồn tại
+      videoButton.innerHTML = html;  // Cập nhật nội dung
+    } else {
+      console.error('Không tìm thấy phần tử .Video__button');
+    }
+  } else {
+    console.error(`Không tìm thấy phần tử với id: ${data.userId}`);
+  }
+
+  if (video) {
+    const overlay = video.parentElement.querySelector('.camera-off-overlay');
     if (overlay) {
       overlay.remove();
     }
@@ -548,16 +635,12 @@ function setGroupScreen() {
 }
 
 
-function setOneScreen() {
+function setOneScreen(id) {
   const videoGrid = document.getElementById('video-grid');
-  videoGrid.className = '';
+  videoGrid.className = "";
 
-  const userVideos = document.querySelectorAll('.video-wrapper');
-
-  userVideos.forEach(video => {
-    console.log(video); // In ra để kiểm tra phần tử
-    video.style.width = '1130px'; // Thêm width vào inline style của thẻ
-  });
+  const videoWrapper = document.getElementById(id)
+  videoWrapper.style.width = '1130px';
 }
 
 //raised hand

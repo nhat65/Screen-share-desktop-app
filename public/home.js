@@ -38,7 +38,7 @@ async function joinRoom() {
         roomId = document.getElementById('input-roomId').value;
 
         if (roomId && Name) {
-            ipcRenderer.send('navigate-to-room', roomId, Name);  // Gửi yêu cầu đến main process
+            ipcRenderer.send('navigate-to-room', { roomId, Name, streamStatus });  // Gửi yêu cầu đến main process
         } else {
             alert('Please enter a Room ID and Name!');
         }
