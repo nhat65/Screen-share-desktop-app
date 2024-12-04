@@ -220,12 +220,23 @@ const addVideoStream = (video, stream, userId) => {
 
 const userMicOn = () => {
   const html = `<i class="fas fa-microphone"></i>`;
-  document.querySelector('.Mute__button_list').innerHTML = html;
+  // document.querySelector('.Mute__button_list').innerHTML = html;
+  const escapedId = CSS.escape(peer.id);
+
+  const userList = document.getElementById('user-list')
+  const userIcon = userList.querySelector(`#${escapedId}`);
+  userIcon.querySelector('.Mute__button_list').innerHTML = html;
 }
 
 const userMicOff = () => {
   const html = `<i class="fas fa-microphone-slash" style="color:red;"></i>`;
-  document.querySelector('.Mute__button_list').innerHTML = html;
+  // document.querySelector('.Mute__button_list').innerHTML = html;
+
+  const escapedId = CSS.escape(peer.id);
+
+  const userList = document.getElementById('user-list')
+  const userIcon = userList.querySelector(`#${escapedId}`);
+  userIcon.querySelector('.Mute__button_list').innerHTML = html;
 }
 
 
@@ -321,12 +332,22 @@ const videoOnOff = () => {
 
 const userVideoOn = () => {
   const html = `<i class="fas fa-video"></i>`;
-  document.querySelector('.Video__button_list').innerHTML = html;
+  // document.querySelector('.Video__button_list').innerHTML = html;
+  const escapedId = CSS.escape(peer.id);
+
+  const userList = document.getElementById('user-list')
+  const userIcon = userList.querySelector(`#${escapedId}`);
+  userIcon.querySelector('.Video__button_list').innerHTML = html;
 }
 
 const userVideoOff = () => {
   const html = `<i class="fas fa-video-slash" style="color:red;"></i>`;
-  document.querySelector('.Video__button_list').innerHTML = html;
+  // document.querySelector('.Video__button_list').innerHTML = html;
+  const escapedId = CSS.escape(peer.id);
+
+  const userList = document.getElementById('user-list')
+  const userIcon = userList.querySelector(`#${escapedId}`);
+  userIcon.querySelector('.Video__button_list').innerHTML = html;
 }
 
 const unsetVideoButton = () => {
