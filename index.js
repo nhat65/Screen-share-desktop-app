@@ -3,7 +3,7 @@ const app = express();
 const server = require('http').Server(app);
 const io = require('socket.io')(server, {
 	cors: {
-		origin: "*",  // Hoặc giới hạn bằng tên miền cụ thể.
+		origin: "*",
 		methods: "*"
 	}
 });
@@ -37,11 +37,6 @@ app.get('/', (req, res) => {
 app.get('/home', (req, res) => {
 	res.render('home');  //send uuid to client address bar 
 })
-
-// load file khi chạy trên web
-//  app.get('/home', (req, res) => {
-//     res.sendFile(path.join(__dirname, 'views', 'home.html'));  // Gửi file home.html từ thư mục views
-// });
 
 app.get('/test', (req, res) => {
 	res.render('test');  //send uuid to client address bar 
@@ -79,7 +74,6 @@ io.on('connect', socket => {
 			}
 		})
 
-		//console.log("room Id:- " + roomId,"userId:- "+ userId);    //userId mean new user 
 
 		//join Room
 		socket.userId = user.userId;
@@ -139,7 +133,6 @@ io.on('connect', socket => {
 		});
 		socket.on('seruI', () => {
 			socket.emit('all_users_inRoom', userI);
-			//console.log(userS);
 			console.log(userI);
 		});
 	})

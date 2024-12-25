@@ -58,16 +58,6 @@ navigator.mediaDevices.getUserMedia({
   addVideoStream(myVideo, stream, peer.id);
   myVideoStream = stream;
 
-  if (streamStatu.video == false) {
-    videoOnOff()
-    userVideoOff()
-  }
-
-  if (streamStatu.audio == false) {
-    muteUnmute()
-  }
-
-
   peer.on('call', call => {
     console.log("answered");
     call.answer(stream);
@@ -121,6 +111,17 @@ navigator.mediaDevices.getUserMedia({
   console.error("Error accessing media devices.", error);
 });
 
+
+function streamStatus(){
+  if (streamStatu.video == false) {
+    videoOnOff()
+  }
+  if (streamStatu.audio == false) {
+    muteUnmute()
+  }
+}
+
+
 //Listerning error of peer
 peer.on('error', (error) => {
   console.error('Peer error:', error);
@@ -135,9 +136,6 @@ peer.on('open', async id => {
 })
 
 socket.on('user-disconnected', (userId, u, peerId, username) => {
-  // $(`#${peerId}`).remove();
-  // console.log(peerId)
-
   const escapedPeerId = CSS.escape(peerId);
   const elements = document.querySelectorAll(`[id='${escapedPeerId}']`);
   elements.forEach(element => element.remove());
@@ -215,6 +213,7 @@ const addVideoStream = (video, stream, userId) => {
   if (video === myVideo) {
     video.muted = true;
   }
+  
 };
 //--User-mic----------------------------------------------------------------------------
 
@@ -319,31 +318,29 @@ const videoOnOff = () => {
   if (enabled) {
     myVideoStream.getVideoTracks()[0].enabled = false;
     unsetVideoButton();
-    userVideoOff()
-    console.log('un set')
+    userVideoOff(peer.id);
+    setScreenOff(peer.id);
     socket.emit('camera-off', { userId: peer.id });
   } else {
     setVideoButton();
-    userVideoOn()
+    userVideoOn(peer.id)
     myVideoStream.getVideoTracks()[0].enabled = true;
     socket.emit('camera-on', { userId: peer.id });
   }
 }
 
-const userVideoOn = () => {
+const userVideoOn = (Id) => {
   const html = `<i class="fas fa-video"></i>`;
-  // document.querySelector('.Video__button_list').innerHTML = html;
-  const escapedId = CSS.escape(peer.id);
+  const escapedId = CSS.escape(Id);
 
   const userList = document.getElementById('user-list')
   const userIcon = userList.querySelector(`#${escapedId}`);
   userIcon.querySelector('.Video__button_list').innerHTML = html;
 }
 
-const userVideoOff = () => {
+const userVideoOff = (Id) => {
   const html = `<i class="fas fa-video-slash" style="color:red;"></i>`;
-  // document.querySelector('.Video__button_list').innerHTML = html;
-  const escapedId = CSS.escape(peer.id);
+  const escapedId = CSS.escape(Id);
 
   const userList = document.getElementById('user-list')
   const userIcon = userList.querySelector(`#${escapedId}`);
@@ -356,12 +353,41 @@ const unsetVideoButton = () => {
   document.querySelector('.Video__button').innerHTML = html;
 
   // Chuyển màn hình video sang màu xám
-  const videoId = peer.id;
-
+  // const escapedId = CSS.escape(peer.id);
+  // const videoElement = document.querySelector(`#${escapedId} video`);
   const videoElement = document.querySelector('video');
+
   videoElement.style.filter = 'grayscale(100%)'; // Chuyển màu video thành màu xám
   videoElement.style.backgroundColor = 'gray'; // Đặt nền video là màu xám
   videoElement.style.border = 'black';
+
+  console.log("Cammera Mode OFF");
+}
+
+const setVideoButton = () => {
+  const html = `<i class="fas fa-video"></i>
+                <span>Stop Video</span>`;
+  document.querySelector('.Video__button').innerHTML = html;
+
+  // Xóa màu xám và icon khi camera bật
+  const escapedId = CSS.escape(peer.id);
+  const videoElement = document.querySelector(`#${escapedId} video`);
+
+  // const videoElement = document.querySelector('video');
+  videoElement.style.filter = 'none';
+  videoElement.style.backgroundColor = 'transparent';
+
+  const overlay = document.querySelector('.camera-off-overlay');
+  if (overlay) {
+    overlay.remove();
+  }
+
+  console.log("Cammera Mode ON");
+}
+
+function setScreenOff(Id){
+  const escapedId = CSS.escape(Id);
+  const videoElement = document.querySelector(`#${escapedId} video`);
 
   // Thêm icon ở giữa màn hình màu xám
   const overlay = document.createElement('div');
@@ -378,85 +404,68 @@ const unsetVideoButton = () => {
 
   // Thêm overlay vào video
   videoElement.parentElement.appendChild(overlay);
-
-
-  console.log("Cammera Mode OFF");
-}
-
-const setVideoButton = () => {
-  const html = `<i class="fas fa-video"></i>
-                <span>Stop Video</span>`;
-  document.querySelector('.Video__button').innerHTML = html;
-
-  // Xóa màu xám và icon khi camera bật
-  const videoId = peer.id;
-  const videoElement = document.querySelector('video');
-  videoElement.style.filter = 'none';
-  videoElement.style.backgroundColor = 'transparent';
-
-  const overlay = document.querySelector('.camera-off-overlay');
-  if (overlay) {
-    overlay.remove();
-  }
-
-  console.log("Cammera Mode ON");
 }
 
 socket.on('user-camera-off', (data) => {
   console.log('User turn off camera' + data.userId)
-  const escapedId = CSS.escape(data.userId);
-  const video = document.querySelector(`#${escapedId} video`);
+  // const escapedId = CSS.escape(data.userId);
+  // const video = document.querySelector(`#${escapedId} video`);
 
-  if (video) {
-    const overlay = document.createElement('div');
-    overlay.classList.add('camera-off-overlay');
-    overlay.innerHTML = `<i class="fas fa-video-slash transform -scale-x-100" style="font-size: 48px; color: red;"></i>`;
-    overlay.style.position = 'absolute';
-    overlay.style.top = '50%';
-    overlay.style.left = '50%';
-    overlay.style.transform = 'translate(-50%, -50%)';
-    overlay.style.color = 'red';
+  // if (video) {
+    // const overlay = document.createElement('div');
+    // overlay.classList.add('camera-off-overlay');
+    // overlay.innerHTML = `<i class="fas fa-video-slash transform -scale-x-100" style="font-size: 48px; color: red;"></i>`;
+    // overlay.style.position = 'absolute';
+    // overlay.style.top = '50%';
+    // overlay.style.left = '50%';
+    // overlay.style.transform = 'translate(-50%, -50%)';
+    // overlay.style.color = 'red';
 
-    video.parentElement.style.position = 'relative';
-    video.parentElement.appendChild(overlay);
+    // video.parentElement.style.position = 'relative';
+    // video.parentElement.appendChild(overlay);
+    setScreenOff(data.userId)
 
-    const userList = document.getElementById('user-list')
-    const userIcon = userList.querySelector(`#${escapedId}`);
+    userVideoOff(data.userId)
 
-    if (userIcon) {  // Kiểm tra userIcon có tồn tại không
-      const html = `<i class="fas fa-video-slash" style="color:red;"></i>`;
-      const videoButton = userIcon.querySelector('.Video__button_list');  // Lấy thẻ Video__button
+    // const userList = document.getElementById('user-list')
+    // const userIcon = userList.querySelector(`#${escapedId}`);
 
-      if (videoButton) {  // Kiểm tra xem phần tử có tồn tại
-        videoButton.innerHTML = html;  // Cập nhật nội dung
-      } else {
-        console.error('Không tìm thấy phần tử .Video__button');
-      }
-    } else {
-      console.error(`Không tìm thấy phần tử với id: ${data.userId}`);
-    }
-  }
+    // if (userIcon) {  // Kiểm tra userIcon có tồn tại không
+    //   const html = `<i class="fas fa-video-slash" style="color:red;"></i>`;
+    //   const videoButton = userIcon.querySelector('.Video__button_list');  // Lấy thẻ Video__button
+
+    //   if (videoButton) {  // Kiểm tra xem phần tử có tồn tại
+    //     videoButton.innerHTML = html;  // Cập nhật nội dung
+    //   } else {
+    //     console.error('Không tìm thấy phần tử .Video__button');
+    //   }
+    // } else {
+    //   console.error(`Không tìm thấy phần tử với id: ${data.userId}`);
+    // }
+  // }
 });
 
 socket.on('user-camera-on', (data) => {
   const escapedId = CSS.escape(data.userId);
   const video = document.querySelector(`#${escapedId} video`);
 
-  const userList = document.getElementById('user-list')
-  const userIcon = userList.querySelector(`#${escapedId}`);
+  // const userList = document.getElementById('user-list')
+  // const userIcon = userList.querySelector(`#${escapedId}`);
 
-  if (userIcon) {  // Kiểm tra userIcon có tồn tại không
-    const html = `<i class="fas fa-video"></i>`;
-    const videoButton = userIcon.querySelector('.Video__button_list');  // Lấy thẻ Video__button
+  // if (userIcon) {  // Kiểm tra userIcon có tồn tại không
+  //   const html = `<i class="fas fa-video"></i>`;
+  //   const videoButton = userIcon.querySelector('.Video__button_list');  // Lấy thẻ Video__button
 
-    if (videoButton) {  // Kiểm tra xem phần tử có tồn tại
-      videoButton.innerHTML = html;  // Cập nhật nội dung
-    } else {
-      console.error('Không tìm thấy phần tử .Video__button');
-    }
-  } else {
-    console.error(`Không tìm thấy phần tử với id: ${data.userId}`);
-  }
+  //   if (videoButton) {  // Kiểm tra xem phần tử có tồn tại
+  //     videoButton.innerHTML = html;  // Cập nhật nội dung
+  //   } else {
+  //     console.error('Không tìm thấy phần tử .Video__button');
+  //   }
+  // } else {
+  //   console.error(`Không tìm thấy phần tử với id: ${data.userId}`);
+  // }
+
+  userVideoOn(data.userId)
 
   if (video) {
     const overlay = video.parentElement.querySelector('.camera-off-overlay');
@@ -513,24 +522,6 @@ window.screenShare = function (stream) {
   setScreenSharingStream(screenStream);
 
   isSharing = true;
-  // socket.emit('is-sharing', isSharing);
-
-  // let videoTrack = stream.getVideoTracks()[0];
-
-  // Khi người dùng dừng chia sẻ màn hình
-  // videoTrack.onended = function () {
-  //   stopScreenShare();
-  // };
-
-  // Thay thế track video của tất cả peer hiện tại
-  // for (let i = 0; i < currentPeer.length; i++) {
-  //   let sender = currentPeer[i].getSenders().find(s => s.track.kind === videoTrack.kind);
-
-  //   if (sender) {
-  //     sender.replaceTrack(videoTrack);
-  //   }
-  // }
-
 
   screenStream.isScreen = true;
 
@@ -631,17 +622,6 @@ function stopScreenShare() {
 
   isSharing = false;
   socket.emit('is-sharing', isSharing);
-
-
-
-  // let videoTrack = myVideoStream.getVideoTracks()[0];
-
-  // for (let x = 0; x < currentPeer.length; x++) {
-  //   let sender = currentPeer[x].getSenders().find(function (s) {
-  //     return s.track.kind == videoTrack.kind;
-  //   })
-  //   sender.replaceTrack(videoTrack);
-  // }
 }
 
 function setGroupScreen() {
